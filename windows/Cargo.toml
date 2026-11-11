@@ -1,0 +1,20 @@
+[package]
+name = "winlayout"
+version = "0.1.0"
+edition = "2021"
+description = "窗口布局管家 - Tauri 2 / Rust Win32，保留 WindowHalf 原有分屏能力，支持多布局、保存当前布局、多层重叠、贴边与拖动编辑"
+authors = ["alvisliu"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+panic = "abort"

@@ -1,0 +1,16 @@
+# Rust / Tauri 构建产物
+/target/
+/gen/
+
+# 运行时产物（布局数据、状态、日志）
+*.log
+*.state
+/layouts.json
+/layouts.json.tmp
+/cli-output.txt
+
+# 调试探针（工作区约定不入库）
+_probe-*
+_diag-*
+_v-*
+_ins-*

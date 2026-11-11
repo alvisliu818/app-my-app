@@ -1,0 +1,14 @@
+# 本项目随仓配置：crates.io 官方 index 在本机解析极慢，改用 rsproxy 稀疏镜像。
+# 本机 ~/.cargo/config.toml 已做了同样的全局配置；这里保留一份相同配置，
+# 便于仓库 clone 到其它机器后直接构建（项目级同名配置优先级更高）。
+[source.crates-io]
+replace-with = "rsproxy-sparse"
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[http]
+multiplexing = false
+
+[net]
+retry = 3

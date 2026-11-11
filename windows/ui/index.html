@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WinLayout · 窗口布局管家</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">田</div>
+        <div>
+          <div class="brand-name">WinLayout</div>
+          <div class="brand-sub">窗口布局管家</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-capture" class="btn primary" title="把当前桌面上的窗口及其位置保存为一个布局">★ 保存当前布局</button>
+        <button id="btn-apply" class="btn accent" title="启动布局中的应用并按分区摆好">▶ 应用布局</button>
+        <span class="sep"></span>
+        <button id="btn-new" class="btn">新建</button>
+        <button id="btn-dup" class="btn">复制</button>
+        <button id="btn-rename" class="btn">重命名</button>
+        <button id="btn-delete" class="btn danger-ghost">删除</button>
+        <span class="sep"></span>
+        <button id="btn-save" class="btn">保存</button>
+        <button id="btn-hotkeys" class="btn">快捷键</button>
+        <button id="btn-settings" class="btn">设置</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="panel left-panel">
+        <div class="panel-title">布局方案 <span id="layout-count" class="badge">0</span></div>
+        <div id="layout-list" class="layout-list"></div>
+        <div class="hint-box">
+          <b>默认快捷键（可自定义 / 留空 / 全关）</b>
+          <div>Win+Alt+Shift+1~9 应用第 N 个布局</div>
+          <div>Win+Alt+S 保存当前布局</div>
+          <div>Win+Alt+1/2/3/4 旧版左/右/满/还原</div>
+          <div>Win+Alt+←/→/↑/↓ 贴边分屏</div>
+          <div>Win+Alt+0 锁定前台 · G 保持 · I 信息</div>
+          <div>拖动窗口按住 Ctrl 落入分区</div>
+        </div>
+      </aside>
+
+      <section class="center">
+        <div class="canvas-toolbar">
+          <span class="label">布局画布</span>
+          <label class="chk"><input type="checkbox" id="chk-snap" checked /> 贴边吸附</label>
+          <label class="chk"><input type="checkbox" id="chk-link" checked /> 联动相邻分区</label>
+          <button id="btn-split-v" class="btn tiny">纵向拆分</button>
+          <button id="btn-split-h" class="btn tiny">横向拆分</button>
+          <button id="btn-add-tile" class="btn tiny">+ 分区</button>
+          <span class="spacer"></span>
+          <span id="canvas-info" class="canvas-info">工作区 -</span>
+        </div>
+        <div id="canvas-wrap">
+          <div id="canvas">
+            <div id="tiles"></div>
+            <div id="guides"></div>
+            <div id="canvas-empty" class="canvas-empty">还没有分区 · 双击空白处添加，或点「保存当前布局」</div>
+          </div>
+        </div>
+        <div class="canvas-tip">
+          拖动分区移动 · 拖边缘/四角改大小（自动吸附屏幕边、中线、相邻分区）· 双击空白新建 · 右键更多操作
+        </div>
+      </section>
+
+      <aside class="panel right-panel">
+        <div class="panel-title">分区属性</div>
+        <div id="tile-props" class="props-empty">在画布上选中一个分区</div>
+        <div id="tile-editor" class="hidden">
+          <div class="field-grid">
+            <label>X %<input id="f-x" type="number" step="0.1" /></label>
+            <label>Y %<input id="f-y" type="number" step="0.1" /></label>
+            <label>W %<input id="f-w" type="number" step="0.1" /></label>
+            <label>H %<input id="f-h" type="number" step="0.1" /></label>
+          </div>
+          <div class="field-grid">
+            <label>层叠 X<input id="f-cx" type="number" step="1" /></label>
+            <label>层叠 Y<input id="f-cy" type="number" step="1" /></label>
+          </div>
+          <div class="sub-title">应用分层（底 → 顶）</div>
+          <div id="layer-list" class="layer-list"></div>
+          <div class="btn-row">
+            <button id="btn-add-window" class="btn tiny">从窗口添加</button>
+            <button id="btn-add-manual" class="btn tiny">手动添加</button>
+          </div>
+          <div class="btn-row">
+            <button id="btn-layer-up" class="btn tiny">上移</button>
+            <button id="btn-layer-down" class="btn tiny">下移</button>
+            <button id="btn-layer-top" class="btn tiny">置顶</button>
+            <button id="btn-layer-edit" class="btn tiny">编辑</button>
+            <button id="btn-layer-del" class="btn tiny danger-ghost">删除</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="statusbar">
+      <span id="status-text">就绪</span>
+      <span class="spacer"></span>
+      <span id="status-workarea">工作区 -</span>
+      <span id="status-version">v0.1.0</span>
+    </footer>
+  </div>
+
+  <!-- 通用对话框 -->
+  <div id="modal-backdrop" class="hidden">
+    <div id="modal" class="modal">
+      <div class="modal-head"><span id="modal-title">对话框</span><button id="modal-x" class="icon-btn">✕</button></div>
+      <div id="modal-body" class="modal-body"></div>
+      <div id="modal-foot" class="modal-foot"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
