@@ -112,9 +112,8 @@ pub fn apply_layout(shared: &SharedRef, name: &str) -> Result<String, String> {
             let off_y = li as i32 * tile.cascade[1].clamp(0, 200);
             let r = [base_rect[0] + off_x, base_rect[1] + off_y, base_rect[2], base_rect[3]];
             win::place(w.hwnd, r, false);
-            let mut rc: RECT = Default::default();
-            unsafe { GetWindowRect(w.hwnd as HWND, &mut rc); }
-            let actual = [rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top];
+            // 偏差按「可视边界」核对（place 做了帧补偿，外矩形会比目标大出一圈边框）
+            let actual = win::visible_rect(w.hwnd);
             let ok = (0..4).all(|i| (actual[i] - r[i]).abs() <= 2);
             used.push(w.hwnd);
             placements.push(Placement { hwnd: w.hwnd, rect: r });
@@ -363,7 +362,8 @@ pub fn snap_from_drag(shared: &SharedRef, hwnd: i64, cur: [i32; 4], ctrl: bool) 
     s.log(&format!("{} hwnd={} rect={:?}", reason, hwnd, r));
 }
 
-/// 守护定时器：样式被改回 POPUP 或窗口被放大回全屏时，自动恢复布局（AHK 原有能力）。
+/// 守护定时器：无边框/POPUP 样式被改回时自动修复（AHK 原有能力）。
+/// 只管样式，不干预窗口位置/大小/最大化——用户可以自由拖动调整，不会被拉回布局位置。
 pub fn guard_tick(shared: &SharedRef) {
     let (base, placements, guard_on) = {
         let s = shared.lock().unwrap();
@@ -376,17 +376,12 @@ pub fn guard_tick(shared: &SharedRef) {
             if IsWindow(h) == 0 { continue; }
             let style = GetWindowLongPtrW(h, GWL_STYLE);
             if (style & WS_POPUP) != 0 || (style & WS_THICKFRAME) == 0 {
-                let mut s = shared.lock().unwrap();
-                win::fix_style(p.hwnd, &base, &mut s.store);
-                s.persist();
-            }
-            let mut rc: RECT = Default::default();
-            GetWindowRect(h, &mut rc);
-            let cur = [rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top];
-            let wa = win::work_area_for(p.hwnd);
-            if win::is_nearly_fullscreen(cur, &wa) && !win::is_nearly_fullscreen(p.rect, &wa) {
-                win::place(p.hwnd, p.rect, false);
-                log_line(&base, &format!("guard: 重新应用 rect hwnd={} {:?}", p.hwnd, p.rect));
+                {
+                    let mut s = shared.lock().unwrap();
+                    win::fix_style(p.hwnd, &base, &mut s.store);
+                    s.persist();
+                }
+                log_line(&base, &format!("guard: 修复样式 hwnd={}", p.hwnd));
             }
         }
     }
@@ -435,10 +430,8 @@ pub fn demo(shared: &SharedRef) -> String {
             let wa = win::work_area_for(w.hwnd);
             let r = win::side_rect("left", &wa);
             win::place(w.hwnd, r, false);
-            let mut rc: RECT = Default::default();
-            unsafe { GetWindowRect(w.hwnd as HWND, &mut rc); }
-            out.push_str(&format!("摆放目标 {:?} 实际 [{},{} {}×{}]\n", r,
-                rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top));
+            let vis = win::visible_rect(w.hwnd);
+            out.push_str(&format!("摆放目标 {:?} 实际(可视) [{},{} {}×{}]\n", r, vis[0], vis[1], vis[2], vis[3]));
             let _ = restore_original(shared, Some(w.hwnd));
             out.push_str("已还原原始样式\n");
             unsafe { PostMessageW(w.hwnd as HWND, WM_CLOSE, 0, 0); }

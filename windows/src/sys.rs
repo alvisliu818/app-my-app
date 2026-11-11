@@ -8,6 +8,7 @@ use crate::engine::{self, SharedRef};
 use crate::ffi::*;
 use crate::hotkeys;
 use crate::model::*;
+use crate::win;
 
 struct SysCtx {
     shared: SharedRef,
@@ -374,9 +375,8 @@ unsafe extern "system" fn mouse_hook(code: i32, wp: WPARAM, lp: LPARAM) -> LRESU
                 let moved = c.drag_moved;
                 c.drag_moved = false;
                 if moved && IsWindow(h as HWND) != 0 {
-                    let mut rc: RECT = Default::default();
-                    GetWindowRect(h as HWND, &mut rc);
-                    let cur = [rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top];
+                    // 用可视边界（DWM）判断贴边：窗口外矩形含隐形边框，直接用会误判贴边
+                    let cur = win::visible_rect(h);
                     let ctrl = (GetAsyncKeyState(VK_CONTROL) as u16 & 0x8000) != 0;
                     engine::snap_from_drag(&c.shared, h, cur, ctrl);
                 }

@@ -806,7 +806,7 @@
         <div class="form-row"><label>应用启动等待（毫秒）</label><input id="st-wait-ms" type="number" value="${s.wait_ms ?? 9000}" /></div>
       </div>
       <label class="chk"><input type="checkbox" id="st-snap" ${s.snap_enabled !== false ? 'checked' : ''}/> 启用贴边（拖动窗口到屏幕边自动吸附 / Ctrl 拖入分区）</label>
-      <label class="chk"><input type="checkbox" id="st-guard" ${s.guard_enabled !== false ? 'checked' : ''}/> 保持状态守护（窗口被改回全屏时自动恢复布局）</label>
+      <label class="chk"><input type="checkbox" id="st-guard" ${s.guard_enabled !== false ? 'checked' : ''}/> 保持状态守护（无边框样式被改回时自动修复；不干预窗口位置/大小/最大化）</label>
       <label class="chk"><input type="checkbox" id="st-fix" ${s.fix_style !== false ? 'checked' : ''}/> 默认修复无边框窗口样式</label>
       <label class="chk"><input type="checkbox" id="st-missing" ${s.launch_if_missing !== false ? 'checked' : ''}/> 已运行的应用不重复启动</label>
       <label class="chk"><input type="checkbox" id="st-autostart" ${S.autostart ? 'checked' : ''}/> 开机自启</label>

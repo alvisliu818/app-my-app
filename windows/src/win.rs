@@ -231,7 +231,40 @@ pub fn restore_style(hwnd: i64, o: &Original) {
     }
 }
 
+/// 可视边界（DWM Extended Frame Bounds）相对窗口矩形的外扩量 [left, top, right, bottom]。
+/// Win10/11 窗口四周有 ~8px 隐形缩放边框：SetWindowPos 设的是含边框的外矩形，
+/// 可见内容比目标矩形小一圈——相邻窗口之间因此出现空隙。摆位后按此补偿即可无缝。
+pub fn frame_inset(hwnd: i64) -> [i32; 4] {
+    unsafe {
+        let h = hwnd as HWND;
+        let mut wr: RECT = Default::default();
+        let mut vr: RECT = Default::default();
+        GetWindowRect(h, &mut wr);
+        let ok = DwmGetWindowAttribute(h, DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut vr as *mut _ as *mut c_void, std::mem::size_of::<RECT>() as u32);
+        if ok != 0 || vr.right <= vr.left || vr.bottom <= vr.top { return [0, 0, 0, 0]; }
+        [vr.left - wr.left, vr.top - wr.top, wr.right - vr.right, wr.bottom - vr.bottom]
+    }
+}
+
+/// 窗口的可视矩形 [x, y, w, h]（DWM 失败时退回 GetWindowRect）。
+pub fn visible_rect(hwnd: i64) -> [i32; 4] {
+    unsafe {
+        let h = hwnd as HWND;
+        let mut vr: RECT = Default::default();
+        let ok = DwmGetWindowAttribute(h, DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut vr as *mut _ as *mut c_void, std::mem::size_of::<RECT>() as u32);
+        if ok == 0 && vr.right > vr.left && vr.bottom > vr.top {
+            return [vr.left, vr.top, vr.right - vr.left, vr.bottom - vr.top];
+        }
+        let mut rc: RECT = Default::default();
+        GetWindowRect(h, &mut rc);
+        [rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top]
+    }
+}
+
 /// 把窗口摆到目标矩形；连续调用时后摆放者在 Z 序上方（用于多层重叠）。
+/// 摆位后做帧补偿：把隐形缩放边框藏到目标矩形外侧，让「可视边界」精确铺满目标矩形。
 pub fn place(hwnd: i64, rect: [i32; 4], activate: bool) {
     unsafe {
         let h = hwnd as HWND;
@@ -240,6 +273,12 @@ pub fn place(hwnd: i64, rect: [i32; 4], activate: bool) {
         else if IsZoomed(h) != 0 { ShowWindow(h, SW_RESTORE); }
         let flags = if activate { 0u32 } else { SWP_NOACTIVATE };
         SetWindowPos(h, HWND_TOP, rect[0], rect[1], rect[2].max(120), rect[3].max(90), flags);
+        let ins = frame_inset(hwnd);
+        if ins != [0, 0, 0, 0] {
+            SetWindowPos(h, HWND_TOP,
+                rect[0] - ins[0], rect[1] - ins[1],
+                (rect[2] + ins[0] + ins[2]).max(120), (rect[3] + ins[1] + ins[3]).max(90), flags);
+        }
     }
 }
 
@@ -342,10 +381,6 @@ pub fn side_rect(side: &str, wa: &RectPx) -> [i32; 4] {
         "q4" => [x + w / 2, y + h / 2, w - w / 2, h - h / 2],
         _ => [x, y, w, h],
     }
-}
-
-pub fn is_nearly_fullscreen(r: [i32; 4], wa: &RectPx) -> bool {
-    r[2] >= (wa.w as f64 * 0.95) as i32 && r[3] >= (wa.h as f64 * 0.85) as i32
 }
 
 pub fn setup_dpi() {

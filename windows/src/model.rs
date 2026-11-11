@@ -150,10 +150,11 @@ pub struct WinInfo {
     pub visible: bool,
 }
 
-/// 守护用：某窗口在布局中的目标矩形。
+/// 守护用：受管窗口记录（rect 保留为布局目标，供诊断；守护现在只管样式不摆位）。
 #[derive(Debug, Clone, Default)]
 pub struct Placement {
     pub hwnd: i64,
+    #[allow(dead_code)]
     pub rect: [i32; 4],
 }
 
